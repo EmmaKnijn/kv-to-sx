@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KV17cvlinfo xmlns="http://bison.connekt.nl/tmi8/kv17/msg">
+  <KV17JOURNEY>
+    <dataownercode>ARR</dataownercode>
+    <lineplanningnumber>315</lineplanningnumber>
+    <operatingday>2026-10-16</operatingday>
+    <journeynumber>1042</journeynumber>
+    <reinforcementnumber>0</reinforcementnumber>
+  </KV17JOURNEY>
+  <KV17MUTATEJOURNEYSTOP>
+    <timestamp>2026-10-16T10:15:30Z</timestamp>
+    <SHORTEN>
+      <userstopcode>57000101</userstopcode>
+      <passagesequencenumber>4</passagesequencenumber>
+    </SHORTEN>
+  </KV17MUTATEJOURNEYSTOP>
+</KV17cvlinfo>

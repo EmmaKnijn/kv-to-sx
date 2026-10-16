@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kv-to-sx"
+version = "0.1.0"
+description = "Convert BISON KV messages (KV15, KV7/8, KV17) into SIRI-SX messages using a TOML mapping file"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Emma Knijn" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+]
+
+[project.scripts]
+kv-to-sx = "kv_to_sx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+cache_dir = "/tmp/pytest_cache"
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bison:BISON xmlns:bison="http://bison.connekt.nl/tmi8/kv8/msg">
+  <TimingPoint>
+    <KV8generalmessages>
+      <GENERALMESSAGEUPDATE>
+        <dataownercode>GVB</dataownercode>
+        <messagecodedate>2026-10-16</messagecodedate>
+        <messagecodenumber>1001</messagecodenumber>
+        <timingpointcode>30005123</timingpointcode>
+        <messagestarttime>2026-10-16T08:00:00Z</messagestarttime>
+        <messagecontent>Elevator out of order at platform 2</messagecontent>
+      </GENERALMESSAGEUPDATE>
+    </KV8generalmessages>
+  </TimingPoint>
+</bison:BISON>

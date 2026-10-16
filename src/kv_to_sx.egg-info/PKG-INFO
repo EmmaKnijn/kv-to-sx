@@ -1,0 +1,165 @@
+Metadata-Version: 2.4
+Name: kv-to-sx
+Version: 0.1.0
+Summary: Convert BISON KV messages (KV15, KV7/8, KV17) into SIRI-SX messages using a TOML mapping file
+Author: Emma Knijn
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+
+# KV to SIRI-SX
+
+A small, modular command-line tool that converts Dutch public transport BISON KV
+messages (KV15, KV7/KV8, and KV17) into European standard SIRI-SX (Situation
+Exchange, CEN TS 15531 / SIRI v2.3) XML messages using a user-editable TOML
+mapping file.
+
+## Features
+
+- **Direct Field Mappings**: Map source XML fields directly to SIRI-SX elements without custom code.
+- **Field Transformations**:
+  - `direct` & `to_string`: Map string and text values directly.
+  - `to_datetime`: Parse ISO 8601 timestamps and format them for SIRI-SX.
+  - `to_integer`: Validate and format numeric sequence values.
+  - `template`: Compose target text by substituting values from source element fields (e.g. `"Stop {userstopcode} is cancelled"`).
+  - `split`: Split a single source field into multiple target fields using a delimiter (e.g. `Summary` and `Description`).
+  - `remove`: Explicitly discard transport or helper fields.
+- **Deterministic Error Reporting**: Actionable error messages identify the input message type, field path, and mapping rule when errors occur.
+- **Independent Mapping Engine**: The conversion core is completely decoupled from CLI I/O and can be used as a Python library.
+- **Zero Third-Party Runtime Dependencies**: Implemented using the Python 3 standard library (`tomllib`, `xml.etree.ElementTree`, `argparse`).
+
+## Installation
+
+Requires Python 3.11+.
+
+```bash
+# Clone the repository
+git clone https://github.com/EmmaKnijn/kv-to-sx.git
+cd kv-to-sx
+
+# Install editable package or run directly
+pip install -e .
+```
+
+You can also run directly without installation via `python3 bin/kv-to-sx` or `python3 -m kv_to_sx`.
+
+## Usage Examples
+
+### 1. File Input
+
+Convert a KV17 message from a file:
+
+```bash
+kv-to-sx examples/kv17_input.xml
+```
+
+### 2. Standard Input (Pipeline)
+
+Pipe KV messages through standard input:
+
+```bash
+cat examples/kv8_input.xml | kv-to-sx
+# or explicitly using '-'
+cat examples/kv8_input.xml | kv-to-sx -
+```
+
+### 3. Custom Mapping File
+
+Specify an alternate mapping configuration file using `-m` or `--mapping`:
+
+```bash
+kv-to-sx -m mapping.toml examples/kv15_input.xml
+```
+
+### 4. Write Output to a File
+
+Write converted SIRI-SX XML directly to an output file using `-o` or `--output`:
+
+```bash
+kv-to-sx examples/kv17_input.xml -o output_siri.xml
+```
+
+### 5. Python API (Engine Independence)
+
+```python
+from kv_to_sx.engine import MappingEngine
+
+# Load mapping configuration
+engine = MappingEngine.from_toml_file("mapping.toml")
+
+# Convert XML string, bytes, or xml.etree.ElementTree.Element
+siri_xml = engine.convert(xml_string)
+print(siri_xml)
+```
+
+## Mapping Configuration (`mapping.toml`)
+
+The configuration file defines general settings, field mappings, and default situation metadata:
+
+```toml
+[config]
+source_format = "xml"
+target_format = "siri-sx"
+path_style = "element-path"
+missing_value = "omit"      # "omit" or "error"
+invalid_value = "error"     # "error" or "omit"
+
+# Direct mapping
+[[mapping]]
+name = "kv17-line-reference"
+source.message = "KV17cvlinfo"
+source.path = "KV17JOURNEY/lineplanningnumber"
+target.path = "Affects/Lines/Line/LineRef"
+operation = "direct"
+
+# Type conversion
+[[mapping]]
+name = "kv17-mutation-time"
+source.message = "KV17cvlinfo"
+source.path = "KV17MUTATEJOURNEYSTOP/timestamp"
+target.path = "VersionedAtTime"
+operation = "to_datetime"
+
+# Template composition
+[[mapping]]
+name = "kv17-shorten-description"
+source.message = "KV17cvlinfo"
+source.path = "KV17MUTATEJOURNEYSTOP/SHORTEN"
+target.path = "Description/Description"
+operation = "template"
+template = "Stop {userstopcode} is cancelled"
+
+# Split field
+[[mapping]]
+name = "message-text-split-example"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/messagecontent"
+target.paths = ["Summary/Summary", "Description/Description"]
+operation = "split"
+delimiter = " | "
+
+# Discard field
+[[mapping]]
+name = "discard-kv-delimiter"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/delimiter"
+operation = "remove"
+
+# Fixed SIRI-SX situation defaults
+[defaults]
+participant_ref = "example-kv-adapter"
+source.source_type = "directReport"
+progress = "open"
+severity = "normal"
+default_language = "nl"
+```
+
+## Running Tests
+
+Run the test suite with `pytest`:
+
+```bash
+pytest
+```

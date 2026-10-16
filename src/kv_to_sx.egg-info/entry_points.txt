@@ -1,0 +1,2 @@
+[console_scripts]
+kv-to-sx = kv_to_sx.cli:main

@@ -1,0 +1,150 @@
+# Example KV -> SIRI-SX mapping.
+#
+# Source versions:
+#   KV15 v8.3.0: https://github.com/BISONNL/KV15/releases/tag/v8.3.0
+#   KV7/8 v8.5.1: https://github.com/BISONNL/KV78/releases/tag/v8.5.1
+#   KV17 v8.5.0: https://github.com/BISONNL/KV17/releases/tag/v8.5.0
+# Target schema:
+#   SIRI v2.3: https://github.com/TransmodelEcosystem/SIRI/tree/v2.3
+#
+# Source paths are relative to the message-specific payload. Target paths are
+# relative to PtSituationElement. The converter is responsible for XML
+# namespaces, the SituationExchangeDelivery wrapper, and repeated elements.
+
+[config]
+source_format = "xml"
+target_format = "siri-sx"
+path_style = "element-path"
+missing_value = "omit"
+invalid_value = "error"
+
+# A direct KV15 stop message mapping.
+[[mapping]]
+name = "kv15-stop-message-id"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/messagecodenumber"
+target.path = "SituationNumber"
+operation = "to_string"
+
+[[mapping]]
+name = "kv15-stop-reference"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/userstopcode"
+target.path = "Affects/StopPoints/StopPoint/StopPointRef"
+operation = "to_string"
+
+[[mapping]]
+name = "kv15-message-text"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/messagecontent"
+target.path = "Description/Description"
+operation = "direct"
+required = true
+
+[[mapping]]
+name = "kv15-message-start"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/messagestarttime"
+target.path = "ValidityPeriod/StartTime"
+operation = "to_datetime"
+
+# KV7/8 general messages use the same message text and stop reference concepts.
+[[mapping]]
+name = "kv78-general-message-text"
+source.message = "KV8generalmessages"
+source.path = "TimingPoint/KV8generalmessages/GENERALMESSAGEUPDATE/messagecontent"
+target.path = "Description/Description"
+operation = "direct"
+required = true
+
+[[mapping]]
+name = "kv78-timing-point-reference"
+source.message = "KV8generalmessages"
+source.path = "TimingPoint/KV8generalmessages/GENERALMESSAGEUPDATE/timingpointcode"
+target.path = "Affects/StopPoints/StopPoint/StopPointRef"
+operation = "direct"
+
+[[mapping]]
+name = "kv78-message-start"
+source.message = "KV8generalmessages"
+source.path = "TimingPoint/KV8generalmessages/GENERALMESSAGEUPDATE/messagestarttime"
+target.path = "ValidityPeriod/StartTime"
+operation = "to_datetime"
+
+# KV17 identifies the affected journey and can generate a SIRI-SX situation
+# for a stop mutation such as SHORTEN or CHANGEPASSTIMES.
+[[mapping]]
+name = "kv17-journey-situation-id"
+source.message = "KV17cvlinfo"
+source.path = "KV17JOURNEY/journeynumber"
+target.path = "SituationNumber"
+operation = "to_string"
+
+[[mapping]]
+name = "kv17-line-reference"
+source.message = "KV17cvlinfo"
+source.path = "KV17JOURNEY/lineplanningnumber"
+target.path = "Affects/Lines/Line/LineRef"
+operation = "direct"
+
+[[mapping]]
+name = "kv17-mutated-stop"
+source.message = "KV17cvlinfo"
+source.path = "KV17MUTATEJOURNEYSTOP/SHORTEN/userstopcode"
+target.path = "Affects/StopPoints/StopPoint/StopPointRef"
+operation = "to_string"
+
+[[mapping]]
+name = "kv17-mutation-time"
+source.message = "KV17cvlinfo"
+source.path = "KV17MUTATEJOURNEYSTOP/timestamp"
+target.path = "VersionedAtTime"
+operation = "to_datetime"
+
+# A mutation can be rendered as a concise SIRI description. The template
+# operation is intentionally simple: it substitutes values and does not expose
+# a general-purpose expression language.
+[[mapping]]
+name = "kv17-shorten-description"
+source.message = "KV17cvlinfo"
+source.path = "KV17MUTATEJOURNEYSTOP/SHORTEN"
+target.path = "Description/Description"
+operation = "template"
+template = "Stop {userstopcode} is cancelled"
+
+# Demonstrates splitting one project-defined input value into two SIRI text
+# fields. The delimiter is an application convention, not a BISON field rule.
+[[mapping]]
+name = "message-text-split-example"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/messagecontent"
+target.paths = ["Summary/Summary", "Description/Description"]
+operation = "split"
+delimiter = " | "
+parts = ["Summary/Summary", "Description/Description"]
+
+# Demonstrates explicit removal. Delimiter is a KV transport/helper field and
+# should not be emitted into SIRI-SX.
+[[mapping]]
+name = "discard-kv-delimiter"
+source.message = "KV15"
+source.path = "KV15messages/STOPMESSAGE/delimiter"
+operation = "remove"
+
+# Demonstrates a type mutation: KV sequence numbers are numeric in KV17, while
+# SIRI references are strings.
+[[mapping]]
+name = "kv17-stop-sequence-as-text"
+source.message = "KV17cvlinfo"
+source.path = "KV17MUTATEJOURNEYSTOP/SHORTEN/passagesequencenumber"
+target.path = "Extensions/kv17:PassageSequenceNumber"
+operation = "to_integer"
+
+# The SIRI-SX producer should normally supply these fixed/context values rather
+# than requiring every source message to contain them.
+[defaults]
+participant_ref = "example-kv-adapter"
+source.source_type = "directReport"
+progress = "open"
+severity = "normal"
+default_language = "nl"

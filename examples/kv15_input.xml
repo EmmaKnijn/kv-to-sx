@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KV15messages xmlns="http://bison.connekt.nl/tmi8/kv15/msg">
+  <STOPMESSAGE>
+    <dataownercode>EBS</dataownercode>
+    <messagecodedate>2026-10-16</messagecodedate>
+    <messagecodenumber>90210</messagecodenumber>
+    <userstopcode>34001234</userstopcode>
+    <messagecontent>Track maintenance | Bus substitution in place until 18:00</messagecontent>
+    <messagestarttime>2026-10-16T07:30:00Z</messagestarttime>
+    <delimiter>|</delimiter>
+  </STOPMESSAGE>
+</KV15messages>
